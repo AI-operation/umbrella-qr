@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>사내 공용 우산</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -42,14 +43,56 @@
       border: 1px solid #ccc;
       color: #111;
       background: #f4f4f4;
+      cursor: pointer;
     }
-    .btn:hover {
-      background: #ececec;
-    }
+    .btn:hover { background: #ececec; }
     .small {
       margin-top: 16px;
       font-size: 13px;
       color: #777;
+    }
+    #login-section { margin-bottom: 8px; }
+    .login-desc {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    #g_id_signin {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    #action-section { display: none; }
+    .user-info {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      text-align: left;
+      font-size: 14px;
+      color: #333;
+    }
+    .user-info .label {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+    .user-info .name {
+      font-weight: bold;
+      font-size: 15px;
+    }
+    .user-info .email {
+      color: #666;
+      margin-top: 2px;
+    }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -58,28 +101,45 @@
     <h1 id="title">우산번호를 확인하는 중입니다.</h1>
     <p>아래에서 원하는 작업을 선택해주세요.</p>
 
-    <a href="#" class="btn" id="rentalBtn">대여하기</a>
-    <a href="#" class="btn" id="returnBtn">반납하기</a>
+    <!-- 로그인 전 -->
+    <div id="login-section">
+      <p class="login-desc">사내 구글 계정으로 로그인하면<br/>이름과 이메일이 자동으로 입력됩니다.</p>
+      <div id="g_id_signin"></div>
+    </div>
+
+    <!-- 로그인 후 -->
+    <div id="action-section">
+      <div class="user-info">
+        <div class="label">로그인된 계정</div>
+        <div class="name" id="user-name"></div>
+        <div class="email" id="user-email"></div>
+      </div>
+      <a href="#" class="btn" id="rentalBtn">대여하기</a>
+      <a href="#" class="btn" id="returnBtn">반납하기</a>
+      <button class="logout-btn" onclick="handleLogout()">다른 계정으로 로그아웃</button>
+    </div>
 
     <div class="small" id="debugText"></div>
   </div>
 
   <script>
+    // ── 폼 URL ──
+    const rentalFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdn2qMrUx1jhc1JZDsAw0amOnCX63WWB1qsv9yBeJ47jVmahA/viewform';
+    const returnFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSf9T4pI-r0acQsZDxWI175fccxKfuJ6RSdhdkmnkp41CIeqkg/viewform';
+
+    // ── entry ID ──
+    const rentalUmbrellaField = 'entry.1599293389';
+    const rentalNameField     = 'entry.1691624216';
+    const rentalEmailField    = 'entry.1024651908';
+    const returnUmbrellaField = 'entry.257713730';
+    const returnNameField     = 'entry.1337672252';
+    const returnEmailField    = 'entry.1794361905';
+
+    // ── 우산번호 파싱 ──
     const params = new URLSearchParams(window.location.search);
     const umbrellaNo = params.get('umbrellaNo') || '';
-
     const title = document.getElementById('title');
     const debugText = document.getElementById('debugText');
-    const rentalBtn = document.getElementById('rentalBtn');
-    const returnBtn = document.getElementById('returnBtn');
-
-    const rentalFormUrl =
-      'https://docs.google.com/forms/d/e/1FAIpQLSdn2qMrUx1jhc1JZDsAw0amOnCX63WWB1qsv9yBeJ47jVmahA/viewform';
-    const returnFormUrl =
-      'https://docs.google.com/forms/d/e/1FAIpQLSf9T4pI-r0acQsZDxWI175fccxKfuJ6RSdhdkmnkp41CIeqkg/viewform';
-
-    const rentalUmbrellaField = 'entry.1599293389';
-    const returnUmbrellaField = 'entry.257713730';
 
     if (umbrellaNo) {
       title.textContent = `${umbrellaNo}번 우산입니다.`;
@@ -89,23 +149,68 @@
       debugText.textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
     }
 
-    rentalBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (!umbrellaNo) return;
+    // ── 버튼 URL 세팅 ──
+    function setupButtons(name, email) {
+      const no = `${umbrellaNo}번`;
 
-      const prefilledUmbrellaNo = `${umbrellaNo}번`;
-      const url = `${rentalFormUrl}?usp=pp_url&${rentalUmbrellaField}=${encodeURIComponent(prefilledUmbrellaNo)}`;
-      window.location.href = url;
-    });
+      document.getElementById('rentalBtn').href =
+        `${rentalFormUrl}?usp=pp_url` +
+        `&${rentalUmbrellaField}=${encodeURIComponent(no)}` +
+        `&${rentalNameField}=${encodeURIComponent(name)}` +
+        `&${rentalEmailField}=${encodeURIComponent(email)}`;
 
-    returnBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (!umbrellaNo) return;
+      document.getElementById('returnBtn').href =
+        `${returnFormUrl}?usp=pp_url` +
+        `&${returnUmbrellaField}=${encodeURIComponent(no)}` +
+        `&${returnNameField}=${encodeURIComponent(name)}` +
+        `&${returnEmailField}=${encodeURIComponent(email)}`;
+    }
 
-      const prefilledUmbrellaNo = `${umbrellaNo}번`;
-      const url = `${returnFormUrl}?usp=pp_url&${returnUmbrellaField}=${encodeURIComponent(prefilledUmbrellaNo)}`;
-      window.location.href = url;
-    });
+    // ── 구글 로그인 콜백 ──
+    function handleCredentialResponse(response) {
+      const payload = parseJwt(response.credential);
+      const name  = payload.name;
+      const email = payload.email;
+
+      document.getElementById('user-name').textContent  = name;
+      document.getElementById('user-email').textContent = email;
+
+      setupButtons(name, email);
+
+      document.getElementById('login-section').style.display  = 'none';
+      document.getElementById('action-section').style.display = 'block';
+    }
+
+    // ── JWT 파싱 ──
+    function parseJwt(token) {
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(decodeURIComponent(
+        atob(base64).split('').map(c =>
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join('')
+      ));
+    }
+
+    // ── 로그아웃 ──
+    function handleLogout() {
+      document.getElementById('login-section').style.display  = 'block';
+      document.getElementById('action-section').style.display = 'none';
+      document.getElementById('user-name').textContent  = '';
+      document.getElementById('user-email').textContent = '';
+    }
+
+    // ── Google Identity 초기화 ──
+    window.onload = function () {
+      google.accounts.id.initialize({
+        client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+        callback: handleCredentialResponse,
+        hd: '*',
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin'),
+        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
+      );
+    };
   </script>
 </body>
 </html>
