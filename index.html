@@ -122,95 +122,76 @@
     <div class="small" id="debugText"></div>
   </div>
 
-  <script>
-    // ── 폼 URL ──
-    const rentalFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdn2qMrUx1jhc1JZDsAw0amOnCX63WWB1qsv9yBeJ47jVmahA/viewform';
-    const returnFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSf9T4pI-r0acQsZDxWI175fccxKfuJ6RSdhdkmnkp41CIeqkg/viewform';
+<script>
+  // ── 웹앱 URL ──
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
 
-    // ── entry ID ──
-    const rentalUmbrellaField = 'entry.1599293389';
-    const rentalNameField     = 'entry.1691624216';
-    const rentalEmailField    = 'entry.1024651908';
-    const returnUmbrellaField = 'entry.257713730';
-    const returnNameField     = 'entry.1337672252';
-    const returnEmailField    = 'entry.1794361905';
+  // ── 우산번호 파싱 ──
+  const params = new URLSearchParams(window.location.search);
+  const umbrellaNo = params.get('umbrellaNo') || '';
+  const title = document.getElementById('title');
+  const debugText = document.getElementById('debugText');
 
-    // ── 우산번호 파싱 ──
-    const params = new URLSearchParams(window.location.search);
-    const umbrellaNo = params.get('umbrellaNo') || '';
-    const title = document.getElementById('title');
-    const debugText = document.getElementById('debugText');
+  if (umbrellaNo) {
+    title.textContent = `${umbrellaNo}번 우산입니다.`;
+    debugText.textContent = `우산번호: ${umbrellaNo}`;
+  } else {
+    title.textContent = '우산번호를 확인할 수 없습니다.';
+    debugText.textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
+  }
 
-    if (umbrellaNo) {
-      title.textContent = `${umbrellaNo}번 우산입니다.`;
-      debugText.textContent = `우산번호: ${umbrellaNo}`;
-    } else {
-      title.textContent = '우산번호를 확인할 수 없습니다.';
-      debugText.textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
-    }
+  // ── 버튼 URL 세팅 ──
+  function setupButtons(name, email) {
+    document.getElementById('rentalBtn').href =
+      `${WEB_APP_URL}?page=landing&umbrellaNo=${encodeURIComponent(umbrellaNo)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
 
-    // ── 버튼 URL 세팅 ──
-    function setupButtons(name, email) {
-      const no = `${umbrellaNo}번`;
+    document.getElementById('returnBtn').href =
+      `${WEB_APP_URL}?page=landing&umbrellaNo=${encodeURIComponent(umbrellaNo)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+  }
 
-      document.getElementById('rentalBtn').href =
-        `${rentalFormUrl}?usp=pp_url` +
-        `&${rentalUmbrellaField}=${encodeURIComponent(no)}` +
-        `&${rentalNameField}=${encodeURIComponent(name)}` +
-        `&${rentalEmailField}=${encodeURIComponent(email)}`;
+  // ── 구글 로그인 콜백 ──
+  function handleCredentialResponse(response) {
+    const payload = parseJwt(response.credential);
+    const name  = payload.name;
+    const email = payload.email;
 
-      document.getElementById('returnBtn').href =
-        `${returnFormUrl}?usp=pp_url` +
-        `&${returnUmbrellaField}=${encodeURIComponent(no)}` +
-        `&${returnNameField}=${encodeURIComponent(name)}` +
-        `&${returnEmailField}=${encodeURIComponent(email)}`;
-    }
+    document.getElementById('user-name').textContent  = name;
+    document.getElementById('user-email').textContent = email;
 
-    // ── 구글 로그인 콜백 ──
-    function handleCredentialResponse(response) {
-      const payload = parseJwt(response.credential);
-      const name  = payload.name;
-      const email = payload.email;
+    setupButtons(name, email);
 
-      document.getElementById('user-name').textContent  = name;
-      document.getElementById('user-email').textContent = email;
+    document.getElementById('login-section').style.display  = 'none';
+    document.getElementById('action-section').style.display = 'block';
+  }
 
-      setupButtons(name, email);
+  // ── JWT 파싱 ──
+  function parseJwt(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(
+      atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join('')
+    ));
+  }
 
-      document.getElementById('login-section').style.display  = 'none';
-      document.getElementById('action-section').style.display = 'block';
-    }
+  // ── 로그아웃 ──
+  function handleLogout() {
+    document.getElementById('login-section').style.display  = 'block';
+    document.getElementById('action-section').style.display = 'none';
+    document.getElementById('user-name').textContent  = '';
+    document.getElementById('user-email').textContent = '';
+  }
 
-    // ── JWT 파싱 ──
-    function parseJwt(token) {
-      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      return JSON.parse(decodeURIComponent(
-        atob(base64).split('').map(c =>
-          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-        ).join('')
-      ));
-    }
-
-    // ── 로그아웃 ──
-    function handleLogout() {
-      document.getElementById('login-section').style.display  = 'block';
-      document.getElementById('action-section').style.display = 'none';
-      document.getElementById('user-name').textContent  = '';
-      document.getElementById('user-email').textContent = '';
-    }
-
-    // ── Google Identity 초기화 ──
-    window.onload = function () {
-      google.accounts.id.initialize({
-        client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
-        callback: handleCredentialResponse,
-        hd: '*',
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('g_id_signin'),
-        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
-      );
-    };
-  </script>
-</body>
-</html>
+  // ── Google Identity 초기화 ──
+  window.onload = function () {
+    google.accounts.id.initialize({
+      client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+      callback: handleCredentialResponse,
+      hd: '*',
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
+    );
+  };
+</script>
