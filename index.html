@@ -411,10 +411,13 @@
 
   window.onload = function () {
     google.accounts.id.initialize({
-      client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
-      callback: handleCredentialResponse,
-      hd: '*',
-    });
+google.accounts.id.initialize({
+  client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+  callback: handleCredentialResponse,
+  hd: '*',
+  use_fedcm_for_prompt: false,
+  itp_support: true,
+});
     google.accounts.id.renderButton(
       document.getElementById('g_id_signin'),
       { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
