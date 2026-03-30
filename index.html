@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>사내 공용 우산</title>
-  <script src="https://accounts.google.com/gsi/client" onload="initGoogleSignIn()"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -237,22 +236,6 @@
 </div>
 
 <script>
-    function initGoogleSignIn() {
-  var el = document.getElementById('g_id_signin');
-  if (!el) {
-    setTimeout(initGoogleSignIn, 50);
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
-    callback: handleCredentialResponse,
-    hd: '*',
-  });
-  google.accounts.id.renderButton(
-    el,
-    { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
-  );
-}
   const WEB_APP_URL = 'https://help-me-bot.onrender.com';
 
   const params = new URLSearchParams(window.location.search);
@@ -423,7 +406,21 @@
     ));
   }
 
-
+  function initGoogleSignIn() {
+    google.accounts.id.initialize({
+      client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+      callback: handleCredentialResponse,
+      hd: '*',
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
+    );
+  }
 </script>
+
+<!-- GIS 스크립트: 위 script 블록이 먼저 파싱된 후 로드되므로 initGoogleSignIn 호출 가능 -->
+<script src="https://accounts.google.com/gsi/client" onload="initGoogleSignIn()" defer></script>
+
 </body>
 </html>
