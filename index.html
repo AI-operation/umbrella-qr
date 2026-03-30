@@ -123,7 +123,8 @@
   </div>
 
 <script>
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
+const RAW_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
+const WEB_APP_URL = RAW_URL.replace(/\/macros\/u\/\d+\/s\//, '/macros/s/');
 
   const params = new URLSearchParams(window.location.search);
   const umbrellaNo = params.get('umbrellaNo') || '';
