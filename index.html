@@ -237,6 +237,17 @@
 </div>
 
 <script>
+    function initGoogleSignIn() {
+    google.accounts.id.initialize({
+      client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+      callback: handleCredentialResponse,
+      hd: '*',
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
+    );
+  }
   const WEB_APP_URL = 'https://help-me-bot.onrender.com';
 
   const params = new URLSearchParams(window.location.search);
@@ -407,17 +418,7 @@
     ));
   }
 
-  function initGoogleSignIn() {
-    google.accounts.id.initialize({
-      client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
-      callback: handleCredentialResponse,
-      hd: '*',
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
-    );
-  }
+
 </script>
 </body>
 </html>
