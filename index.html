@@ -247,7 +247,6 @@
   let photoBase64 = '';
   let photoMimeType = '';
 
-  // 우산번호 표시
   if (umbrellaNo) {
     document.getElementById('title').textContent = `${umbrellaNo}번 우산입니다.`;
     document.getElementById('debugText').textContent = `우산번호: ${umbrellaNo}`;
@@ -257,7 +256,6 @@
     document.getElementById('debugText').textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
   }
 
-  // 반납 예정일 설정
   const today = new Date();
   const minDate = today.toISOString().split('T')[0];
   const maxDate = new Date(today);
@@ -267,7 +265,6 @@
   document.getElementById('rent-due-date').max = maxDateStr;
   document.getElementById('rent-due-date').value = minDate;
 
-  // 화면 전환
   function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -283,7 +280,6 @@
     }
   }
 
-  // 구글 로그인 콜백
   function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
     currentUser.name  = payload.name;
@@ -293,13 +289,11 @@
     showScreen('screen-action');
   }
 
-  // 로그아웃
   function handleLogout() {
     currentUser = { name: '', email: '' };
     showScreen('screen-login');
   }
 
-  // 반납층 선택
   function selectFloor(floor) {
     selectedFloor = floor;
     document.querySelectorAll('.floor-btn').forEach(btn => {
@@ -307,7 +301,6 @@
     });
   }
 
-  // 사진 업로드
   function handlePhoto(input) {
     const file = input.files[0];
     if (!file) return;
@@ -324,21 +317,21 @@
     reader.readAsDataURL(file);
   }
 
-  // JSONP 방식으로 Apps Script 호출
   function callApi(data, callback) {
-    const callbackName = 'cb_' + Date.now();
-    window[callbackName] = function(result) {
-      delete window[callbackName];
-      document.head.removeChild(script);
-      callback(result);
-    };
-    const encoded = encodeURIComponent(JSON.stringify(data));
-    const script = document.createElement('script');
-    script.src = `${WEB_APP_URL}?callback=${callbackName}&data=${encoded}`;
-    document.head.appendChild(script);
+    const endpoint = data.action === 'rent'
+      ? `${WEB_APP_URL}/umbrella/rent`
+      : `${WEB_APP_URL}/umbrella/return`;
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    .then(r => r.json())
+    .then(callback)
+    .catch(err => callback({ success: false, message: err.message }));
   }
 
-  // 대여 제출
   function handleRentSubmit() {
     const dueDate = document.getElementById('rent-due-date').value;
     if (!dueDate) { alert('반납 예정일을 선택해주세요.'); return; }
@@ -347,21 +340,66 @@
     btn.disabled = true;
     btn.textContent = '처리 중...';
 
-function callApi(data, callback) {
-  const endpoint = data.action === 'rent'
-    ? `${WEB_APP_URL}/umbrella/rent`
-    : `${WEB_APP_URL}/umbrella/return`;
+    callApi({
+      action: 'rent',
+      name: currentUser.name,
+      email: currentUser.email,
+      umbrellaNo: umbrellaNo + '번',
+      dueDate: dueDate,
+    }, function(result) {
+      if (!result.success) {
+        alert(result.message);
+        btn.disabled = false;
+        btn.textContent = '대여 신청하기';
+        return;
+      }
+      document.getElementById('success-title').textContent = '대여 신청 완료!';
+      document.getElementById('success-desc').textContent =
+        `${umbrellaNo}번 우산 대여가 완료됐습니다.\n반납 예정일에 맞춰 알림을 보내드립니다.`;
+      document.getElementById('success-summary').innerHTML = `
+        <div class="summary-row"><span class="summary-label">우산번호</span><span class="summary-value">${umbrellaNo}번</span></div>
+        <div class="summary-row"><span class="summary-label">대여자</span><span class="summary-value">${currentUser.name}</span></div>
+        <div class="summary-row"><span class="summary-label">반납 예정일</span><span class="summary-value">${dueDate}</span></div>
+      `;
+      showScreen('screen-success');
+    });
+  }
 
-  fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  .then(r => r.json())
-  .then(callback)
-  .catch(err => callback({ success: false, message: err.message }));
-}
-  // JWT 파싱
+  function handleReturnSubmit() {
+    if (!selectedFloor) { alert('반납 위치를 선택해주세요.'); return; }
+    if (!photoBase64)   { alert('반납 사진을 첨부해주세요.'); return; }
+
+    const btn = document.getElementById('return-submit-btn');
+    btn.disabled = true;
+    btn.textContent = '처리 중...';
+
+    callApi({
+      action: 'return',
+      name: currentUser.name,
+      email: currentUser.email,
+      umbrellaNo: umbrellaNo + '번',
+      returnFloor: selectedFloor,
+      photoBase64: photoBase64,
+      photoMimeType: photoMimeType,
+    }, function(result) {
+      if (!result.success) {
+        alert(result.message);
+        btn.disabled = false;
+        btn.textContent = '반납 완료하기';
+        return;
+      }
+      document.getElementById('success-title').textContent = '반납 완료!';
+      document.getElementById('success-desc').textContent =
+        `${umbrellaNo}번 우산이 반납됐습니다.\n${selectedFloor} 우산꽂이에 반납해주셔서 감사합니다.`;
+      document.getElementById('success-summary').innerHTML = `
+        <div class="summary-row"><span class="summary-label">우산번호</span><span class="summary-value">${umbrellaNo}번</span></div>
+        <div class="summary-row"><span class="summary-label">반납자</span><span class="summary-value">${currentUser.name}</span></div>
+        <div class="summary-row"><span class="summary-label">반납 위치</span><span class="summary-value">${selectedFloor}</span></div>
+      `;
+      showScreen('screen-success');
+    });
+  }
+
   function parseJwt(token) {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(decodeURIComponent(
@@ -371,7 +409,6 @@ function callApi(data, callback) {
     ));
   }
 
-  // Google Identity 초기화
   window.onload = function () {
     google.accounts.id.initialize({
       client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
