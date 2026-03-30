@@ -410,7 +410,11 @@ function handleCredentialResponse(response) {
     ));
   }
 
-window.onload = function () {
+function initGoogleSignIn() {
+  if (typeof google === 'undefined') {
+    setTimeout(initGoogleSignIn, 100);
+    return;
+  }
   google.accounts.id.initialize({
     client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
     callback: handleCredentialResponse,
@@ -420,4 +424,8 @@ window.onload = function () {
     document.getElementById('g_id_signin'),
     { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
   );
+}
+
+window.onload = function () {
+  initGoogleSignIn();
 };
