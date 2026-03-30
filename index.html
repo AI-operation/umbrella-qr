@@ -140,17 +140,22 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmM
   }
 
 function setupButtons(name, email) {
-  document.getElementById('rentalBtn').href =
-    `${WEB_APP_URL}?usp=sharing&page=rent` +
+  const rentUrl =
+    `${WEB_APP_URL}?page=rent` +
     `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
     `&name=${encodeURIComponent(name)}` +
     `&email=${encodeURIComponent(email)}`;
 
-  document.getElementById('returnBtn').href =
-    `${WEB_APP_URL}?usp=sharing&page=return` +
+  const returnUrl =
+    `${WEB_APP_URL}?page=return` +
     `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
     `&name=${encodeURIComponent(name)}` +
     `&email=${encodeURIComponent(email)}`;
+
+  document.getElementById('rentalBtn').href = rentUrl;
+  document.getElementById('rentalBtn').target = '_blank';
+  document.getElementById('returnBtn').href = returnUrl;
+  document.getElementById('returnBtn').target = '_blank';
 }
 
   function handleCredentialResponse(response) {
