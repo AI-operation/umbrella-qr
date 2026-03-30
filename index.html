@@ -142,12 +142,19 @@
 
   // ── 버튼 URL 세팅 ──
   function setupButtons(name, email) {
-    document.getElementById('rentalBtn').href =
-      `${WEB_APP_URL}?page=landing&umbrellaNo=${encodeURIComponent(umbrellaNo)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+function setupButtons(name, email) {
+  document.getElementById('rentalBtn').href =
+    `${WEB_APP_URL}?page=rent` +
+    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+    `&name=${encodeURIComponent(name)}` +
+    `&email=${encodeURIComponent(email)}`;
 
-    document.getElementById('returnBtn').href =
-      `${WEB_APP_URL}?page=landing&umbrellaNo=${encodeURIComponent(umbrellaNo)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
-  }
+  document.getElementById('returnBtn').href =
+    `${WEB_APP_URL}?page=return` +
+    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+    `&name=${encodeURIComponent(name)}` +
+    `&email=${encodeURIComponent(email)}`;
+}
 
   // ── 구글 로그인 콜백 ──
   function handleCredentialResponse(response) {
