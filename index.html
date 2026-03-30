@@ -124,7 +124,7 @@
 
 <script>
 const RAW_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
-const WEB_APP_URL = RAW_URL.replace(/\/macros\/u\/\d+\/s\//, '/macros/s/');
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
 
   const params = new URLSearchParams(window.location.search);
   const umbrellaNo = params.get('umbrellaNo') || '';
@@ -139,19 +139,19 @@ const WEB_APP_URL = RAW_URL.replace(/\/macros\/u\/\d+\/s\//, '/macros/s/');
     debugText.textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
   }
 
-  function setupButtons(name, email) {
-    document.getElementById('rentalBtn').href =
-      `${WEB_APP_URL}?page=rent` +
-      `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
-      `&name=${encodeURIComponent(name)}` +
-      `&email=${encodeURIComponent(email)}`;
+function setupButtons(name, email) {
+  document.getElementById('rentalBtn').href =
+    `${WEB_APP_URL}?usp=sharing&page=rent` +
+    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+    `&name=${encodeURIComponent(name)}` +
+    `&email=${encodeURIComponent(email)}`;
 
-    document.getElementById('returnBtn').href =
-      `${WEB_APP_URL}?page=return` +
-      `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
-      `&name=${encodeURIComponent(name)}` +
-      `&email=${encodeURIComponent(email)}`;
-  }
+  document.getElementById('returnBtn').href =
+    `${WEB_APP_URL}?usp=sharing&page=return` +
+    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+    `&name=${encodeURIComponent(name)}` +
+    `&email=${encodeURIComponent(email)}`;
+}
 
   function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
