@@ -123,10 +123,8 @@
   </div>
 
 <script>
-  // ── 웹앱 URL ──
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxMXXipsPhhYqGlrgmMSb853OAFkq9lfV9cgngLguAub-aP9cMdBMe5Vebz5ndWXpGZ8A/exec';
 
-  // ── 우산번호 파싱 ──
   const params = new URLSearchParams(window.location.search);
   const umbrellaNo = params.get('umbrellaNo') || '';
   const title = document.getElementById('title');
@@ -140,23 +138,20 @@
     debugText.textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
   }
 
-  // ── 버튼 URL 세팅 ──
   function setupButtons(name, email) {
-function setupButtons(name, email) {
-  document.getElementById('rentalBtn').href =
-    `${WEB_APP_URL}?page=rent` +
-    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
-    `&name=${encodeURIComponent(name)}` +
-    `&email=${encodeURIComponent(email)}`;
+    document.getElementById('rentalBtn').href =
+      `${WEB_APP_URL}?page=rent` +
+      `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+      `&name=${encodeURIComponent(name)}` +
+      `&email=${encodeURIComponent(email)}`;
 
-  document.getElementById('returnBtn').href =
-    `${WEB_APP_URL}?page=return` +
-    `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
-    `&name=${encodeURIComponent(name)}` +
-    `&email=${encodeURIComponent(email)}`;
-}
+    document.getElementById('returnBtn').href =
+      `${WEB_APP_URL}?page=return` +
+      `&umbrellaNo=${encodeURIComponent(umbrellaNo)}` +
+      `&name=${encodeURIComponent(name)}` +
+      `&email=${encodeURIComponent(email)}`;
+  }
 
-  // ── 구글 로그인 콜백 ──
   function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
     const name  = payload.name;
@@ -171,7 +166,6 @@ function setupButtons(name, email) {
     document.getElementById('action-section').style.display = 'block';
   }
 
-  // ── JWT 파싱 ──
   function parseJwt(token) {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(decodeURIComponent(
@@ -181,7 +175,6 @@ function setupButtons(name, email) {
     ));
   }
 
-  // ── 로그아웃 ──
   function handleLogout() {
     document.getElementById('login-section').style.display  = 'block';
     document.getElementById('action-section').style.display = 'none';
@@ -189,7 +182,6 @@ function setupButtons(name, email) {
     document.getElementById('user-email').textContent = '';
   }
 
-  // ── Google Identity 초기화 ──
   window.onload = function () {
     google.accounts.id.initialize({
       client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
