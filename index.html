@@ -280,14 +280,15 @@
     }
   }
 
-  function handleCredentialResponse(response) {
-    const payload = parseJwt(response.credential);
-    currentUser.name  = payload.name;
-    currentUser.email = payload.email;
-    document.getElementById('user-name').textContent  = currentUser.name;
-    document.getElementById('user-email').textContent = currentUser.email;
-    showScreen('screen-action');
-  }
+function handleCredentialResponse(response) {
+  console.log('구글 로그인 콜백 수신:', response);
+  const payload = parseJwt(response.credential);
+  currentUser.name  = payload.name;
+  currentUser.email = payload.email;
+  document.getElementById('user-name').textContent  = currentUser.name;
+  document.getElementById('user-email').textContent = currentUser.email;
+  showScreen('screen-action');
+}
 
   function handleLogout() {
     currentUser = { name: '', email: '' };
@@ -409,17 +410,22 @@
     ));
   }
 
-  window.onload = function () {
-google.accounts.id.initialize({
-  client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
-  callback: handleCredentialResponse,
-  hd: '*',
-});
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
-    );
-  };
-</script>
-</body>
-</html>
+window.onload = function () {
+  google.accounts.id.initialize({
+    client_id: '252421124683-8527dm9fafhas9o0fhe201tqu6t9md7t.apps.googleusercontent.com',
+    callback: handleCredentialResponse,
+    hd: '*',
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g_id_signin'),
+    { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
+  );
+
+  // Safari/아이폰 대응: One Tap 프롬프트도 함께 실행
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // One Tap이 안 되면 버튼 방식으로 폴백
+      document.getElementById('g_id_signin').style.display = 'flex';
+    }
+  });
+};
