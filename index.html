@@ -62,6 +62,37 @@
       color: #bbb; font-size: 12px;
       cursor: pointer; margin-top: 12px;
     }
+    .available-box {
+      background: #f0f7ff;
+      border: 1px solid #c8e0ff;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .available-box .label {
+      font-size: 11px;
+      color: #4361ee;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    .available-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .available-tag {
+      background: #4361ee;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .available-none {
+      font-size: 13px;
+      color: #e03131;
+    }
     .field { margin-bottom: 16px; text-align: left; }
     .field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
     .field-value {
@@ -157,8 +188,14 @@
       <div class="name" id="user-name"></div>
       <div class="email" id="user-email"></div>
     </div>
-<button class="btn btn-secondary" onclick="showScreen('screen-rent')">☂️ 대여하기</button>
-<button class="btn btn-secondary" onclick="showScreen('screen-return')">↩️ 반납하기</button>
+    <div class="available-box">
+      <div class="label">☂️ 현재 대여 가능한 우산</div>
+      <div class="available-tags" id="available-tags">
+        <span style="font-size:13px; color:#888;">불러오는 중...</span>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="showScreen('screen-rent')">☂️ 대여하기</button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-return')">↩️ 반납하기</button>
     <button class="logout-btn" onclick="handleLogout()">다른 계정으로 로그아웃</button>
   </div>
 
@@ -184,7 +221,7 @@
       <input type="date" id="rent-due-date" required/>
       <div class="field-hint">최대 1개월 이내로 반납 예정일을 선택해주세요.</div>
     </div>
-    <button class="btn btn-primary" id="rent-submit-btn" onclick="handleRentSubmit()">대여 신청하기</button>
+    <button class="btn btn-secondary" id="rent-submit-btn" onclick="handleRentSubmit()">대여 신청하기</button>
     <button class="back-btn" onclick="showScreen('screen-action')">← 뒤로가기</button>
   </div>
 
@@ -221,7 +258,7 @@
       <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)"/>
       <img id="photo-preview" alt="반납 사진 미리보기"/>
     </div>
-    <button class="btn btn-primary" id="return-submit-btn" onclick="handleReturnSubmit()">반납 완료하기</button>
+    <button class="btn btn-secondary" id="return-submit-btn" onclick="handleReturnSubmit()">반납 완료하기</button>
     <button class="back-btn" onclick="showScreen('screen-action')">← 뒤로가기</button>
   </div>
 
@@ -236,15 +273,15 @@
 </div>
 
 <script>
-  const WEB_APP_URL = 'https://help-me-bot.onrender.com';
+  var WEB_APP_URL = 'https://help-me-bot.onrender.com';
 
-  const params = new URLSearchParams(window.location.search);
-  const umbrellaNo = params.get('umbrellaNo') || '';
+  var params = new URLSearchParams(window.location.search);
+  var umbrellaNo = params.get('umbrellaNo') || '';
 
-  let currentUser = { name: '', email: '' };
-  let selectedFloor = '';
-  let photoBase64 = '';
-  let photoMimeType = '';
+  var currentUser = { name: '', email: '' };
+  var selectedFloor = '';
+  var photoBase64 = '';
+  var photoMimeType = '';
 
   if (umbrellaNo) {
     document.getElementById('title').textContent = umbrellaNo + '번 우산입니다.';
@@ -255,14 +292,55 @@
     document.getElementById('debugText').textContent = 'URL에 umbrellaNo 파라미터가 없습니다.';
   }
 
-  const today = new Date();
-  const minDate = today.toISOString().split('T')[0];
-  const maxDate = new Date(today);
+  var today = new Date();
+  var minDate = today.toISOString().split('T')[0];
+  var maxDate = new Date(today);
   maxDate.setMonth(maxDate.getMonth() + 1);
-  const maxDateStr = maxDate.toISOString().split('T')[0];
+  var maxDateStr = maxDate.toISOString().split('T')[0];
   document.getElementById('rent-due-date').min = minDate;
   document.getElementById('rent-due-date').max = maxDateStr;
   document.getElementById('rent-due-date').value = minDate;
+
+  // ── 세션 유지 ──
+  function saveSession(name, email) {
+    sessionStorage.setItem('umbrella_user', JSON.stringify({ name: name, email: email }));
+  }
+
+  function loadSession() {
+    try {
+      var saved = sessionStorage.getItem('umbrella_user');
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return null;
+  }
+
+  function clearSession() {
+    sessionStorage.removeItem('umbrella_user');
+  }
+
+  // ── 대여 가능 우산 목록 불러오기 ──
+  function loadAvailableUmbrellas() {
+    fetch(WEB_APP_URL + '/umbrella/status')
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        var container = document.getElementById('available-tags');
+        container.innerHTML = '';
+        if (!result.success || !result.available || result.available.length === 0) {
+          container.innerHTML = '<span class="available-none">현재 대여 가능한 우산이 없습니다.</span>';
+          return;
+        }
+        result.available.forEach(function(no) {
+          var tag = document.createElement('span');
+          tag.className = 'available-tag';
+          tag.textContent = no;
+          container.appendChild(tag);
+        });
+      })
+      .catch(function() {
+        document.getElementById('available-tags').innerHTML =
+          '<span style="font-size:13px; color:#888;">현황을 불러올 수 없습니다.</span>';
+      });
+  }
 
   function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
@@ -277,18 +355,23 @@
       document.getElementById('return-email').textContent = currentUser.email;
       document.getElementById('return-umbrella').textContent = umbrellaNo + '번';
     }
+    if (screenId === 'screen-action') {
+      loadAvailableUmbrellas();
+    }
   }
 
   function handleCredentialResponse(response) {
-    const payload = parseJwt(response.credential);
+    var payload = parseJwt(response.credential);
     currentUser.name  = payload.name;
     currentUser.email = payload.email;
+    saveSession(currentUser.name, currentUser.email);
     document.getElementById('user-name').textContent  = currentUser.name;
     document.getElementById('user-email').textContent = currentUser.email;
     showScreen('screen-action');
   }
 
   function handleLogout() {
+    clearSession();
     currentUser = { name: '', email: '' };
     showScreen('screen-login');
   }
@@ -412,6 +495,19 @@
       callback: handleCredentialResponse,
       hd: '*',
     });
+
+    // 세션 복원 시도
+    var saved = loadSession();
+    if (saved && saved.name && saved.email) {
+      currentUser.name  = saved.name;
+      currentUser.email = saved.email;
+      document.getElementById('user-name').textContent  = currentUser.name;
+      document.getElementById('user-email').textContent = currentUser.email;
+      showScreen('screen-action');
+      return;
+    }
+
+    // 세션 없으면 로그인 버튼 표시
     google.accounts.id.renderButton(
       document.getElementById('g_id_signin'),
       { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ko' }
@@ -419,7 +515,6 @@
   }
 </script>
 
-<!-- GIS 스크립트: 위 script 블록이 먼저 파싱된 후 로드되므로 initGoogleSignIn 호출 가능 -->
 <script src="https://accounts.google.com/gsi/client" onload="initGoogleSignIn()" defer></script>
 
 </body>
